@@ -11,3 +11,4 @@ wikipedia
 trustcall
 langgraph-cli
 streamlit
+pdfminer.six
