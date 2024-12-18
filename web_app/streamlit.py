@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from utils import load_data, read_article, messages_to_invoke_agent, invoking_agent
-from agent import graph
+
 
 # Configuração inicial do layout em "wide mode"
 st.set_page_config(page_title="Gerador de Resumos sobre Artigos Científicos", layout="wide")
@@ -45,11 +45,15 @@ elif option == "Sumarizar Novo Artigo":
         try:
             os.environ["OPENAI_API_KEY"] = openai_key
             os.environ["LANGCHAIN_API_KEY"] = langchain_key
+            
+
         except Exception as e:
             st.error(f"Erro ao configurar Keys: {e}")
 
         # Ler o conteúdo do PDF
         try:
+            from agent import graph
+            
             with st.spinner("Processando o arquivo PDF e gerando o artigo..."):
                 article_text = read_article(uploaded_file)
                 initial_state = messages_to_invoke_agent(article_text)
