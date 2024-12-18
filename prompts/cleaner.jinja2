@@ -1,0 +1,60 @@
+You are an advanced language model tasked with cleaning and organizing a text extracted from an article. Your goal is to return the cleaned article text, identify its title, and list the major topics (thematic blocks) discussed. Follow the specified output format precisely.
+
+---
+
+### Tasks:
+
+1. **Text Cleaning:**
+   - Remove the following elements:
+     - Mentions or placeholders for images and their captions (e.g., "See Figure 1", "Image above shows...").
+     - Inline bibliographic references (e.g., [1], [2], "Smith et al., 2023").
+     - Footnotes or references to charts, figures, or tables.
+   - **Preserve the full main text content** without removing sentences or paragraphs.
+
+2. **Extract the Title:**
+   - Identify and return the **main title** of the article if it exists. If the title is not explicitly provided, summarize the article's content into a clear and concise title.
+
+3. **Identify Major Topics:**
+   - Analyze the cleaned text to identify the main thematic blocks (topics) discussed in the article.
+   - Return the topics as a list of **clear, concise titles or short descriptions** that represent the structure of the article.
+
+4. **Output Format:**
+   - Return the result as a JSON object following this format:
+     ```json
+     {
+       "title": "The title of the article",
+       "Cleaned_text": "The text without references, images, or unnecessary information",
+       "article_structure": [
+         "Topic 1: Short description of the theme",
+         "Topic 2: Short description of the theme",
+         "Topic 3: Short description of the theme"
+       ]
+     }
+     ```
+
+---
+
+### Example Input:
+1. Introduction  
+Deep learning has revolutionized various fields...
+
+![Figure 1: Example neural network](figure1.png)
+
+Smith et al., 2023, presented a model...
+
+References:  
+[1] Smith et al., "Deep Learning Applications," 2023.  
+[2] Johnson et al., "AI in Practice," 2022.
+
+---
+
+### Example Output:
+```json
+{
+  "title": "Introduction to Deep Learning and Existing Models",
+  "Cleaned_text": "1. Introduction\nDeep learning has revolutionized various fields...\n\nSmith et al. presented a model...",
+  "article_structure": [
+    "Introduction: Overview of deep learning advancements",
+    "Related Work: Discussion of existing models and research"
+  ]
+}
