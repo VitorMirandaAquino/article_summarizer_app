@@ -44,7 +44,7 @@ def messages_to_invoke_agent(article_text):
 
     return initial_state
 
-@st.cache_data
+
 # Função para simular a sumarização do agente (substitua pela sua implementação)
 def invoking_agent(initial_state, graph):
     # Aqui você pode integrar com o seu agente de sumarização
