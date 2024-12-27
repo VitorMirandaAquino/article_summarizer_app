@@ -1,7 +1,7 @@
 import streamlit as st
 import os
-from utils import load_data, read_article, messages_to_invoke_agent, invoking_agent
-
+from utils import load_data, read_article, messages_to_invoke_agent, invoking_agent, display_formatter
+from agent import compile_graph
 
 # Configuração inicial do layout em "wide mode"
 st.set_page_config(page_title="Gerador de Resumos sobre Artigos Científicos", layout="wide")
@@ -26,8 +26,8 @@ if option == "Visualizar Artigos Sumarizados":
     selected_article = df[df["title"] == article_title].iloc[0]
 
     # Exibir detalhes do artigo selecionado
-    st.title(selected_article['title'])
-    st.markdown(selected_article['article_medium'], unsafe_allow_html=True)  # Renderiza Markdown estilizado
+    display_formatter(selected_article)
+    
 
 elif option == "Sumarizar Novo Artigo":
     # Sumarizar Novo Artigo
@@ -45,14 +45,13 @@ elif option == "Sumarizar Novo Artigo":
         try:
             os.environ["OPENAI_API_KEY"] = openai_key
             os.environ["LANGCHAIN_API_KEY"] = langchain_key
-            
 
         except Exception as e:
             st.error(f"Erro ao configurar Keys: {e}")
 
         # Ler o conteúdo do PDF
         try:
-            from agent import graph
+            graph = compile_graph()
             
             with st.spinner("Processando o arquivo PDF e gerando o artigo..."):
                 article_text = read_article(uploaded_file)
@@ -60,7 +59,7 @@ elif option == "Sumarizar Novo Artigo":
                 article_medium = invoking_agent(initial_state, graph)
 
             # Exibir detalhes do artigo selecionado
-            st.title(article_medium['title'])
-            st.markdown(article_medium['article_medium'], unsafe_allow_html=True)  # Renderiza Markdown estilizado
+            display_formatter(article_medium)
+            
         except Exception as e:
             st.error(f"Erro ao processar o arquivo PDF: {e}")

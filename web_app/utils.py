@@ -44,10 +44,28 @@ def messages_to_invoke_agent(article_text):
 
     return initial_state
 
+@st.cache_data
 # Função para simular a sumarização do agente (substitua pela sua implementação)
 def invoking_agent(initial_state, graph):
     # Aqui você pode integrar com o seu agente de sumarização
     output = graph.invoke(initial_state)
 
     return output
+
+@st.cache_data
+def display_formatter(graph_output):
+    # Exibir detalhes do artigo selecionado
+    tab1, tab2, tab3 = st.tabs(["Q&A", "Concepts", "Summary"])
+    with tab1:
+        st.title(graph_output['title'])
+        st.markdown(graph_output['article_analysis'], unsafe_allow_html=True)
+        
+    with tab2:
+        st.title(graph_output['title'])
+        st.markdown(graph_output['concepts_medium'], unsafe_allow_html=True)
+
+    with tab3:
+        st.markdown(graph_output['summary_medium'], unsafe_allow_html=True)
+        
+
 

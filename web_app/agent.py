@@ -25,7 +25,9 @@ class OverallState(TypedDict):
     article_structure: Annotated[list, ...,"List of topics in the structure of the article"]
     concepts_explained: Annotated[list, ..., "The explanation of concepts involved in the article"]
     summary: Annotated[str, ..., "Summary of the article"]
-    article_medium: Annotated[str, ..., "Article formatted to be included in the streamlit"]
+    article_analysis: Annotated[str, ..., "Answers provided by the model over ther article"]
+    concepts_medium: Annotated[str, ..., "Explanation of the key concepts formatted to be included in the streamlit"]
+    summary_medium: Annotated[str, ..., "Summary of the article formatted to be included in the streamlit"]
 
 class InputState(TypedDict):
     """ Messages sent to call the agent"""
@@ -45,10 +47,14 @@ class Article_Summary(TypedDict):
     """Summary of the article"""
     summary: Annotated[str, ..., "Summary of the article"]
 
+class Article_Analysis(TypedDict):
+    """Common questions aswered by the model"""
+    article_analysis: Annotated[str, ..., "Answers provided by the model over ther article"]
+
 class Article_Formatted(TypedDict):
     """Summary of the article"""
-    article_medium: Annotated[str, ..., "Article formatted to be included in the streamlit"]
-
+    concepts_medium: Annotated[str, ..., "Explanation of the key concepts formatted to be included in the streamlit"]
+    summary_medium: Annotated[str, ..., "Summary of the article formatted to be included in the streamlit"]
 
 # Função para processar o artigo e retornar um estado válido
 def clean_article(state: InputState) -> Clean_Text:
@@ -60,7 +66,7 @@ def clean_article(state: InputState) -> Clean_Text:
     return cleaned_output
 
 def explain_related_concepts(state: Clean_Text) -> Explain_Concepts:
-    template_path = "prompts/concept_explainer.jinja2"
+    template_path = "article_summarizer_app/prompts/concept_explainer.jinja2"
     concept_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
     initial_state = [
             SystemMessage(content=concept_prompt, name="System"),
@@ -73,7 +79,7 @@ def explain_related_concepts(state: Clean_Text) -> Explain_Concepts:
     return concepts_explained
 
 def summarize_article(state: Clean_Text) -> Article_Summary:
-    template_path = "prompts/summarizer.jinja2"
+    template_path = "article_summarizer_app/prompts/summarizer.jinja2"
     summary_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render(article_structure="\n".join(state['article_structure']))
     initial_state = [
             SystemMessage(content=summary_prompt, name="System"),
@@ -84,9 +90,22 @@ def summarize_article(state: Clean_Text) -> Article_Summary:
     summary_generated = structured_llm.invoke(initial_state)
 
     return summary_generated
+
+def analyze_article(state: Clean_Text) -> Article_Analysis:
+    template_path = "article_summarizer_app/prompts/q&a.jinja2"
+    q_a_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
+    initial_state = [
+            SystemMessage(content=q_a_prompt, name="System"),
+            HumanMessage(content=f"This is the article: \n {state['Cleaned_text']}", name="User")
+        ]
+
+    structured_llm = llm.with_structured_output(Article_Analysis)
+    questions_answered = structured_llm.invoke(initial_state)
+
+    return questions_answered
     
 def format_medium_article(state: OverallState) -> OverallState:
-    template_path = "prompts/formatter.jinja2"
+    template_path = "article_summarizer_app/prompts/formatter.jinja2"
     formatter_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
     provide_info = """
     This is the article:
@@ -106,16 +125,21 @@ def format_medium_article(state: OverallState) -> OverallState:
 
     return medium_article
 
+def compile_graph():
+    graph = StateGraph(OverallState, input=InputState, output=OverallState)
+    graph.add_node("clean_article", clean_article)
+    graph.add_node("explain_related_concepts", explain_related_concepts)
+    graph.add_node("summarize_article", summarize_article)
+    graph.add_node("analyze_article", analyze_article)
+    graph.add_node("format_medium_article", format_medium_article)
+    graph.add_edge(START, "clean_article")
+    graph.add_edge("clean_article", "explain_related_concepts")
+    graph.add_edge("clean_article", "summarize_article")
+    graph.add_edge("clean_article", "analyze_article")
+    graph.add_edge("explain_related_concepts", "format_medium_article")
+    graph.add_edge("summarize_article", "format_medium_article")
+    graph.add_edge("analyze_article", "format_medium_article")
+    graph.add_edge("format_medium_article", END)
+    graph = graph.compile()
 
-graph = StateGraph(OverallState, input=InputState, output=OverallState)
-graph.add_node("clean_article", clean_article)
-graph.add_node("explain_related_concepts", explain_related_concepts)
-graph.add_node("summarize_article", summarize_article)
-graph.add_node("format_medium_article", format_medium_article)
-graph.add_edge(START, "clean_article")
-graph.add_edge("clean_article", "explain_related_concepts")
-graph.add_edge("clean_article", "summarize_article")
-graph.add_edge("explain_related_concepts", "format_medium_article")
-graph.add_edge("summarize_article", "format_medium_article")
-graph.add_edge("format_medium_article", END)
-graph = graph.compile()
+    return graph
