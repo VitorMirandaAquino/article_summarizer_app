@@ -51,6 +51,7 @@ elif option == "Sumarizar Novo Artigo":
 
         # Ler o conteúdo do PDF
         try:
+            from agent import compile_graph
             graph = compile_graph()
             
             with st.spinner("Processando o arquivo PDF e gerando o artigo..."):
