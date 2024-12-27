@@ -66,7 +66,7 @@ def clean_article(state: InputState) -> Clean_Text:
     return cleaned_output
 
 def explain_related_concepts(state: Clean_Text) -> Explain_Concepts:
-    template_path = "article_summarizer_app/prompts/concept_explainer.jinja2"
+    template_path = "prompts/concept_explainer.jinja2"
     concept_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
     initial_state = [
             SystemMessage(content=concept_prompt, name="System"),
@@ -79,7 +79,7 @@ def explain_related_concepts(state: Clean_Text) -> Explain_Concepts:
     return concepts_explained
 
 def summarize_article(state: Clean_Text) -> Article_Summary:
-    template_path = "article_summarizer_app/prompts/summarizer.jinja2"
+    template_path = "prompts/summarizer.jinja2"
     summary_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render(article_structure="\n".join(state['article_structure']))
     initial_state = [
             SystemMessage(content=summary_prompt, name="System"),
@@ -92,7 +92,7 @@ def summarize_article(state: Clean_Text) -> Article_Summary:
     return summary_generated
 
 def analyze_article(state: Clean_Text) -> Article_Analysis:
-    template_path = "article_summarizer_app/prompts/q&a.jinja2"
+    template_path = "prompts/q&a.jinja2"
     q_a_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
     initial_state = [
             SystemMessage(content=q_a_prompt, name="System"),
@@ -105,7 +105,7 @@ def analyze_article(state: Clean_Text) -> Article_Analysis:
     return questions_answered
     
 def format_medium_article(state: OverallState) -> OverallState:
-    template_path = "article_summarizer_app/prompts/formatter.jinja2"
+    template_path = "prompts/formatter.jinja2"
     formatter_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
     provide_info = """
     This is the article:
