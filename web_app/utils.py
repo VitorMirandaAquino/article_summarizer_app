@@ -52,7 +52,7 @@ def invoking_agent(initial_state, graph):
 
     return output
 
-@st.cache_data
+
 def display_formatter(graph_output):
     # Exibir detalhes do artigo selecionado
     tab1, tab2, tab3 = st.tabs(["Q&A", "Concepts", "Summary"])
