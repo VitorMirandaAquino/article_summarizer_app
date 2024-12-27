@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 from utils import load_data, read_article, messages_to_invoke_agent, invoking_agent, display_formatter
-from agent import compile_graph
 
 # Configuração inicial do layout em "wide mode"
 st.set_page_config(page_title="Gerador de Resumos sobre Artigos Científicos", layout="wide")
