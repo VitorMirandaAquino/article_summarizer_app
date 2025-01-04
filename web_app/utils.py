@@ -64,7 +64,7 @@ def load_data(start_date, end_date, flag_agenda, paper_theme):
     
 def define_filters():
     col1, col2, col3 = st.columns([1, 1, 1])
-    flag_agenda = col1.selectbox("Paper was presented in a Academia Analytics agenda:", ["Yes", "No", "All"]) 
+    flag_agenda = col1.selectbox("Paper was presented in a Academia Analytics agenda:", ["All", "Yes", "No"]) 
     # Date range selection
     start_date, end_date = col2.date_input(
         "Date range to filters papers between this period:",
@@ -75,9 +75,9 @@ def define_filters():
     end_date = datetime.combine(end_date, datetime.min.time())
 
     paper_theme = col3.selectbox("Select the theme of paper:", 
-                   ["LLM", "RAG", "AGENTS", "COMPUTER VISION",
+                   ["All","LLM", "RAG", "AGENTS", "COMPUTER VISION",
                     "OPTIMIZATION", "CLASSIFICATION", "TIME SERIES",
-                    "CLUSTERING", "REGRESSION", "OTHERS", "All"])
+                    "CLUSTERING", "REGRESSION", "OTHERS"])
     
     return start_date, end_date, flag_agenda, paper_theme
 
