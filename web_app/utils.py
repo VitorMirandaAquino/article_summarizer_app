@@ -11,44 +11,75 @@ import jinja2
 
 # Biblioteca para configuração das estruturas do output das chamadas as LLMs
 from typing import Annotated
-from langgraph.graph.message import add_messages
 from langchain_core.messages import HumanMessage, SystemMessage, AnyMessage
 from typing_extensions import Annotated, TypedDict
 
+# Biblioteca para conexão com banco NoSQL
+from pymongo import MongoClient
 
 # Função para carregar os artigos já sumarizados
-@st.cache_data
-def load_data():
-    df = pd.read_parquet('data/database_articles.parquet')
-    return df
+#@st.cache_data
+def load_data(start_date, end_date, flag_agenda, paper_theme):
+    # Conexão com o banco de dados
+    # Get the MongoDB URI from secrets
+    MONGO_URI = st.secrets["mongo"]["uri"]
+    client = MongoClient(MONGO_URI)
+    db = client["article_summarizer"]
+    collection = db["articles"]
+
+    # Determinar os filtros
+    filtros = []
+
+    # Adicionar filtros dinamicamente
+    if flag_agenda == "Yes":
+        filtros.append({"academia": True})
+
+    elif flag_agenda == "No":
+        filtros.append({"academia": False})
+
+    if paper_theme != "All":
+        filtros.append({"theme": paper_theme})
+
+    # Alguma condição
+    filtros.append({
+        "created_at": {
+            "$gte": start_date,
+            "$lt": end_date
+        }
+    })
+
+    # Usar $and se houver múltiplos filtros
+    consulta = {"$and": filtros} if filtros else {}
+
+    if collection.count_documents(consulta) == 0:
+        st.warning("No papers found with the selected filters.")
+    else:
+        documentos = collection.find(consulta)
+
+        df = pd.DataFrame(documentos)
+        return df
 # Função para ler o pdf do artigo
 @st.cache_data
 def read_article(file_uploaded):
-    article_text = extract_text(file_uploaded)
-    return article_text
+    # Extrai texto diretamente
+    texto_extraido = extract_text(file_uploaded)
+    primeira_pagina = extract_text(file_uploaded, maxpages=1)[:500]
 
-@st.cache_data
-def messages_to_invoke_agent(article_text):
-
-    # Prompt de sistema inicial
-    template_path = "prompts/cleaner.jinja2"
-    cleaner_prompt = jinja2.Template(open(template_path, encoding="utf-8").read()).render()
-
-    # Adicionando artigo ao dicionário de messagens
-    initial_state = {
-        "messages": [
-            SystemMessage(content=cleaner_prompt, name="System"),
-            HumanMessage(content=f"This is the article: \n {article_text}", name="User")
-        ]
+    article_info = {
+        "first_page": primeira_pagina,
+        "article": texto_extraido
     }
 
-    return initial_state
+    return article_info
 
 
 # Função para simular a sumarização do agente (substitua pela sua implementação)
-def invoking_agent(initial_state, graph):
+def invoking_agent(article_info, graph):
     # Aqui você pode integrar com o seu agente de sumarização
-    output = graph.invoke(initial_state)
+    try:
+        output = graph.invoke(article_info)
+    except Exception as e:
+        st.error(f"Error invoking agent: {e}")
 
     return output
 

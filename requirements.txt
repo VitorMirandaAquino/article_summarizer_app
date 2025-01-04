@@ -12,3 +12,4 @@ trustcall
 langgraph-cli
 streamlit
 pdfminer.six
+pymongo

@@ -1,43 +1,63 @@
 import streamlit as st
 import os
-from utils import load_data, read_article, messages_to_invoke_agent, invoking_agent, display_formatter
+from utils import load_data, read_article, invoking_agent, display_formatter
+from datetime import datetime
 
 # Configuração inicial do layout em "wide mode"
-st.set_page_config(page_title="Gerador de Resumos sobre Artigos Científicos", layout="wide")
+st.set_page_config(page_title="Generator of summaries about Scientific Papers", layout="wide")
 
 # Aplicação Streamlit
-st.title("Ferramenta de Sumarização de Artigos")
-st.sidebar.title("Opções")
-option = st.sidebar.selectbox("Escolha uma opção", ["Visualizar Artigos Sumarizados", "Sumarizar Novo Artigo"])
+st.title("Tool to summarize Scientific Papers")
+st.sidebar.title("Options")
+option = st.sidebar.selectbox("Choose one option:", ["Visualize summarized papers", "Summarize New Paper"])
 
-if option == "Visualizar Artigos Sumarizados":
+if option == "Visualize summarized papers":
     # Visualização de Artigos Sumarizados
-    st.header("📚 Artigos Sumarizados")
-    st.write("Escolha um artigo pelo título para visualizar o resumo e detalhes.")
+    st.header("📚 Summarized Papers")
+    st.subheader("Define the parameters to filter the papers.")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    flag_agenda = col1.selectbox("Paper was presented in a Academia Analytics agenda:", ["Yes", "No", "All"]) 
+    # Date range selection
+    start_date, end_date = col2.date_input(
+        "Date range to filters papers between this period:",
+        [datetime(2019, 1, 1), datetime(2030, 12, 31)]
+    )
+    # Adjusting datetime
+    start_date = datetime.combine(start_date, datetime.min.time())
+    end_date = datetime.combine(end_date, datetime.min.time())
+
+    paper_theme = col3.selectbox("Select the theme of paper:", 
+                   ["LLM", "RAG", "AGENTS", "COMPUTER VISION",
+                    "OPTIMIZATION", "CLASSIFICATION", "TIME SERIES",
+                    "CLUSTERING", "REGRESSION", "OTHERS", "All"])
+
+
+    st.write("Choose one paper by the title to see the summary and details.")
 
     # Carregar os dados
-    df = load_data()
+    df = load_data(start_date, end_date, flag_agenda, paper_theme)
+    
+    if df is not None:
+        # Exibir todos os títulos no selectbox
+        article_title = st.selectbox("Select one paper:", df["title"].tolist())
 
-    # Exibir todos os títulos no selectbox
-    article_title = st.selectbox("Selecione um artigo:", df["title"].tolist())
+        # Filtrar o artigo selecionado
+        selected_article = df[df["title"] == article_title].iloc[0]
 
-    # Filtrar o artigo selecionado
-    selected_article = df[df["title"] == article_title].iloc[0]
-
-    # Exibir detalhes do artigo selecionado
-    display_formatter(selected_article)
+        # Exibir detalhes do artigo selecionado
+        display_formatter(selected_article)
     
 
-elif option == "Sumarizar Novo Artigo":
+elif option == "Summarize New Paper":
     # Sumarizar Novo Artigo
-    st.header("📄 Sumarizar Artigo")
-    st.write("Faça upload de um arquivo PDF para que o agente possa gerar o resumo.")
+    st.header("📄 Summarize Article")
+    st.write("Make upload of the PDF file, so the agent can generate the summary.")
 
-    openai_key = st.sidebar.text_input("Adicione sua Key da OpenAI:", type="password")
-    langchain_key = st.sidebar.text_input("Adicione sua Key da LangChain:", type="password")
+    openai_key = st.sidebar.text_input("Add your OpenAI key:", type="password")
+    langchain_key = st.sidebar.text_input("Add your LangChain key:", type="password")
 
     # Upload do arquivo PDF
-    uploaded_file = st.file_uploader("Envie seu arquivo PDF", type=["pdf"])
+    uploaded_file = st.file_uploader("Send your PDF file", type=["pdf"])
     
     if uploaded_file is not None and openai_key is not None and langchain_key is not None:
         # Configurar conexões
@@ -46,20 +66,19 @@ elif option == "Sumarizar Novo Artigo":
             os.environ["LANGCHAIN_API_KEY"] = langchain_key
 
         except Exception as e:
-            st.error(f"Erro ao configurar Keys: {e}")
+            st.error(f"Error to configurate the keys: {e}")
 
         # Ler o conteúdo do PDF
         try:
             from agent import compile_graph
             graph = compile_graph()
             
-            with st.spinner("Processando o arquivo PDF e gerando o artigo..."):
-                article_text = read_article(uploaded_file)
-                initial_state = messages_to_invoke_agent(article_text)
-                article_medium = invoking_agent(initial_state, graph)
+            with st.spinner("Processing the PDF file and generating article..."):
+                article_info = read_article(uploaded_file)
+                article_medium = invoking_agent(article_info, graph)
 
             # Exibir detalhes do artigo selecionado
             display_formatter(article_medium)
             
         except Exception as e:
-            st.error(f"Erro ao processar o arquivo PDF: {e}")
+            st.error(f"Error to process PDF file: {e}")
