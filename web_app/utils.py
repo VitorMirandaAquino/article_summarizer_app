@@ -17,6 +17,9 @@ from typing_extensions import Annotated, TypedDict
 # Biblioteca para conexão com banco NoSQL
 from pymongo import MongoClient
 
+# Biblioteca para manipulação de datas
+from datetime import datetime
+
 # Função para carregar os artigos já sumarizados
 #@st.cache_data
 def load_data(start_date, end_date, flag_agenda, paper_theme):
@@ -58,6 +61,26 @@ def load_data(start_date, end_date, flag_agenda, paper_theme):
 
         df = pd.DataFrame(documentos)
         return df
+    
+def define_filters():
+    col1, col2, col3 = st.columns([1, 1, 1])
+    flag_agenda = col1.selectbox("Paper was presented in a Academia Analytics agenda:", ["Yes", "No", "All"]) 
+    # Date range selection
+    start_date, end_date = col2.date_input(
+        "Date range to filters papers between this period:",
+        [datetime(2023, 1, 1), datetime(2026, 12, 31)]
+    )
+    # Adjusting datetime
+    start_date = datetime.combine(start_date, datetime.min.time())
+    end_date = datetime.combine(end_date, datetime.min.time())
+
+    paper_theme = col3.selectbox("Select the theme of paper:", 
+                   ["LLM", "RAG", "AGENTS", "COMPUTER VISION",
+                    "OPTIMIZATION", "CLASSIFICATION", "TIME SERIES",
+                    "CLUSTERING", "REGRESSION", "OTHERS", "All"])
+    
+    return start_date, end_date, flag_agenda, paper_theme
+
 # Função para ler o pdf do artigo
 @st.cache_data
 def read_article(file_uploaded):

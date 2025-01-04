@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from utils import load_data, read_article, invoking_agent, display_formatter
+from utils import load_data, read_article, invoking_agent, display_formatter, define_filters
 from datetime import datetime
 
 # Configuração inicial do layout em "wide mode"
@@ -12,25 +12,11 @@ st.sidebar.title("Options")
 option = st.sidebar.selectbox("Choose one option:", ["Visualize summarized papers", "Summarize New Paper"])
 
 if option == "Visualize summarized papers":
+    st.write(st.secrets["mongo"]["uri"])
     # Visualização de Artigos Sumarizados
     st.header("📚 Summarized Papers")
     st.subheader("Define the parameters to filter the papers.")
-    col1, col2, col3 = st.columns([1, 1, 1])
-    flag_agenda = col1.selectbox("Paper was presented in a Academia Analytics agenda:", ["Yes", "No", "All"]) 
-    # Date range selection
-    start_date, end_date = col2.date_input(
-        "Date range to filters papers between this period:",
-        [datetime(2019, 1, 1), datetime(2030, 12, 31)]
-    )
-    # Adjusting datetime
-    start_date = datetime.combine(start_date, datetime.min.time())
-    end_date = datetime.combine(end_date, datetime.min.time())
-
-    paper_theme = col3.selectbox("Select the theme of paper:", 
-                   ["LLM", "RAG", "AGENTS", "COMPUTER VISION",
-                    "OPTIMIZATION", "CLASSIFICATION", "TIME SERIES",
-                    "CLUSTERING", "REGRESSION", "OTHERS", "All"])
-
+    start_date, end_date, flag_agenda, paper_theme = define_filters()
 
     st.write("Choose one paper by the title to see the summary and details.")
 
