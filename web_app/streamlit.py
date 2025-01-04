@@ -12,7 +12,6 @@ st.sidebar.title("Options")
 option = st.sidebar.selectbox("Choose one option:", ["Visualize summarized papers", "Summarize New Paper"])
 
 if option == "Visualize summarized papers":
-    st.write(st.secrets["mongo"]["uri"])
     # Visualização de Artigos Sumarizados
     st.header("📚 Summarized Papers")
     st.subheader("Define the parameters to filter the papers.")
